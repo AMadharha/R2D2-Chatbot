@@ -3,7 +3,7 @@ import pyttsx3
 import response
 import sys
 
-WAKE_WORD = 'hey r2 hey r-2 hey r2d2 hey r2-d2 hey artoo-detoo hey artoo'
+WAKE_WORD = 'hey r2 hey r-2 hey r2d2 hey r2-d2 hey artoo-detoo hey artoo hairdo'
 recognizer = speech_recognition.Recognizer()
 speaker = pyttsx3.init('sapi5')
 
@@ -33,6 +33,11 @@ while True:
                         speaker.say(res)
                         speaker.runAndWait()
     except speech_recognition.UnknownValueError:
+        speaker.say('dunno!')
+        speaker.runAndWait()
+        recognizer = speech_recognition.Recognizer()
+        pass
+    except IndexError:
         speaker.say('dunno!')
         speaker.runAndWait()
         recognizer = speech_recognition.Recognizer()

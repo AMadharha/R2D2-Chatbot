@@ -130,3 +130,6 @@ dmypy.json
 
 # secret files
 secret.py
+
+# generated images
+*.png
