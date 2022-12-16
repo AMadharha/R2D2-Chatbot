@@ -1,44 +1,76 @@
-import speech_recognition
+import speech_recognition as sr
 import pyttsx3
-import response
+import playsound
+import chat_gbt
 import sys
+import os
 
-WAKE_WORD = 'hey r2 hey r-2 hey r2d2 hey r2-d2 hey artoo-detoo hey artoo hairdo'
-recognizer = speech_recognition.Recognizer()
-speaker = pyttsx3.init('sapi5')
+# Set the wakeword
+WAKE_WORD = 'hey r2 hey r-2 hey r2d2 hey r2-d2 hey artoo-detoo hey artoo hairdo hey artoo detoo'
 
-while True:
+# Create a recognizer object
+recognizer = sr.Recognizer()
+
+# Create a microphone object
+mic = sr.Microphone()
+
+# Create a speaker output object
+engine = pyttsx3.init()
+engine.setProperty('rate', 140)
+voices = engine.getProperty('voices')
+engine.setProperty('voice', voices[0].id)
+
+# Function to output text through speaker
+def speak(text):
+    engine.say(text)
+    engine.runAndWait()
+
+# Function to listen for the wakeword
+def listen_for_wakeword():
+    with mic as source:
+        recognizer.adjust_for_ambient_noise(source, duration=0.2)
+        audio = recognizer.listen(source)
+
+    # Attempt to recognize the wakework
     try:
-        with speech_recognition.Microphone() as mic:
-            recognizer.adjust_for_ambient_noise(mic, duration=0.2)
-            audio = recognizer.listen(mic)
-            text = recognizer.recognize_google(audio)
-            text = text.lower()
+        text = recognizer.recognize_google(audio)
+        if text.lower() in WAKE_WORD:
+            return True
+        else:
+            return False
+    except sr.UnknownValueError:
+        playsound.playsound(os.path.join(os.path.dirname(__file__), 'audio/failureR2D2.mp3'))
+        return False
+    except sr.RequestError:
+        playsound.playsound(os.path.join(os.path.dirname(__file__), 'audio/failureR2D2.mp3'))
+        return False
 
-            if text in WAKE_WORD:
-                speaker.say('hello')
-                speaker.runAndWait()
-                audio = recognizer.listen(mic)
-                text = recognizer.recognize_google(audio)
-                text = text.lower()
+# Start listening for the wakeword
+while True:
+    if listen_for_wakeword():
+        # Once the wakeword is detected, start listening for commands
+        playsound.playsound(os.path.join(os.path.dirname(__file__), 'audio/wakewordR2D2.mp3'))
+        with mic as source:
+            recognizer.adjust_for_ambient_noise(source, duration=0.2)
+            audio = recognizer.listen(source)
 
-                if text == 'turn off':
-                    speaker.say('Beep Boop')
-                    speaker.runAndWait()
-                    speaker.stop()
+        # Attempt to recognize the command and get a response
+        try:
+            command = recognizer.recognize_google(audio)
+            if command is not None:
+                if command.lower() == "turn off":
+                    playsound.playsound(os.path.join(os.path.dirname(__file__), 'audio/turnoffR2D2.mp3'))
+                    engine.stop()
                     sys.exit()
                 else:
-                    if text is not None:
-                        res = response.get_chat_gpt_response(text)
-                        speaker.say(res)
-                        speaker.runAndWait()
-    except speech_recognition.UnknownValueError:
-        speaker.say('dunno!')
-        speaker.runAndWait()
-        recognizer = speech_recognition.Recognizer()
-        pass
-    except IndexError:
-        speaker.say('dunno!')
-        speaker.runAndWait()
-        recognizer = speech_recognition.Recognizer()
-        pass
+                    response = chat_gbt.get_response(command)
+                    speak(response)
+        except sr.UnknownValueError:
+            playsound.playsound(os.path.join(os.path.dirname(__file__), 'audio/failureR2D2.mp3'))
+            pass
+        except sr.RequestError:
+            playsound.playsound(os.path.join(os.path.dirname(__file__), 'audio/failureR2D2.mp3'))
+            pass
+        except IndexError:
+            playsound.playsound(os.path.join(os.path.dirname(__file__), 'audio/failureR2D2.mp3'))
+            pass
